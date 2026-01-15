@@ -178,6 +178,7 @@ public:
     }
 };
 
+/* Uncomment this to do inidividual file testing */
 // int main() {
 //     TicTacToeBFS game;
 //     game.playGame();
