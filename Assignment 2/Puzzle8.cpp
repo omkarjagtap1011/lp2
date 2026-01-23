@@ -143,13 +143,7 @@ int main(){
 
     // Redirect all standard output to the file.
     streambuf* oldCoutBuf = cout.rdbuf(output.rdbuf());
-
-    vector<vector<int>> initBoard = {
-        {1, 2, 3},
-        {4, 0, 6},
-        {7, 5, 8}
-    };
-
+    
     GameState state = createSolvableState(20);
 
     cout<<"Initial State:\n";
