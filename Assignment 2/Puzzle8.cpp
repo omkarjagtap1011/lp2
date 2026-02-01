@@ -3,6 +3,7 @@
 #include <queue>
 #include <set>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 int SIZE = 3;
@@ -29,6 +30,7 @@ class GameState{
         int g; // depth of this state
         int h; // heuristic value of this state
         int f; // f = g + h
+        GameState* parent;
 
     public:
         // This constructor can be used to initialize a game state at depth 0
@@ -39,18 +41,20 @@ class GameState{
             g = 0;
             h = _calculateHeuristic();
             f = g + h;
+            parent = nullptr;
         }
 
-        GameState(GameState& prevState, int nextI, int nextJ){
-            board = prevState.getBoard();
+        GameState(GameState* prevState, int nextI, int nextJ){
+            board = prevState->getBoard();
             
-            board[prevState.getEmpI()][prevState.getEmpJ()] = board[nextI][nextJ];
+            board[prevState->getEmpI()][prevState->getEmpJ()] = board[nextI][nextJ];
             board[nextI][nextJ] = 0;
             empI = nextI;
             empJ = nextJ;
-            g = prevState.getDepth() + 1;
+            g = prevState->getDepth() + 1;
             h = _calculateHeuristic();
             f = g + h;
+            parent = prevState;
         }
 
         int _calculateHeuristic(){
@@ -90,17 +94,21 @@ class GameState{
             return f;
         }
 
-        void printState(){
-            cout<<"-------------\n";
+        GameState* getParent(){
+            return parent;
+        }
+
+        void printState(ofstream& output){
+            output<<"-------------\n";
             for(int i=0; i<SIZE; i++){
                 for(int j=0; j<SIZE; j++){
-                    cout<<"| "<< board[i][j]<<" ";
+                    output<<"| "<< board[i][j]<<" ";
                 }
-                cout<<"|\n";
-                cout<<"-------------\n";
+                output<<"|\n";
+                output<<"-------------\n";
             }
 
-            cout<<"(g="<<g<<", h="<<h<<", f="<<f<<")\n\n";
+            output<<"(g="<<g<<", h="<<h<<", f="<<f<<")\n\n";
         }
 };
 
@@ -134,30 +142,34 @@ GameState createSolvableState(int moves = 20) {
     return GameState(board, empI, empJ);
 }
 
-int main(){
+int main(int argc, char* argv[]){
     ofstream output("output.txt");
     if(!output.is_open()){
         cerr << "Failed to open output.txt for writing" << endl;
         return 1;
     }
 
-    // Redirect all standard output to the file.
-    streambuf* oldCoutBuf = cout.rdbuf(output.rdbuf());
-    
-    GameState state = createSolvableState(20);
+    // Get solvableStateCount from command line arguments
+    // This value will determine ATMOST how many moves the goal state is from the initial state
+    // For example if solvableStateCount = 5, then the initial state can be 0 to 5 moves away from the goal state
+    int solvableStateCount = 3; // default value
+    if(argc > 1){
+        solvableStateCount = stoi(argv[1]);
+    }
 
-    cout<<"Initial State:\n";
-    state.printState();
+    cout<<"Solvable State Count: "<<solvableStateCount<<endl;
 
-    auto cmp = [](const GameState& a, const GameState& b){
-        return a.getF() > b.getF();
+    auto cmp = [](GameState* a, GameState* b){
+        return a->getF() > b->getF();
     };
 
-    priority_queue<GameState, vector<GameState>, decltype(cmp)> pq(cmp);
+    priority_queue<GameState*, vector<GameState*>, decltype(cmp)> pq(cmp);
     set<vector<vector<int>>> visited;
 
+    GameState* state = new GameState(createSolvableState(solvableStateCount));
+    
     pq.push(state);
-    visited.insert(state.getBoard());
+    visited.insert(state->getBoard());
 
     int step = 0;
 
@@ -165,44 +177,59 @@ int main(){
         state = pq.top();
         pq.pop();
 
-        cout << "=============================\n";
-        cout << "Step " << step++ << ": Expanding state\n";
-        state.printState();
+        output << "=============================\n";
+        output << "Step " << step++ << ": Expanding state\n";
+        state->printState(output);
 
-        if(state.getHeuristic() == 0){
-            cout << "Goal state reached!\n";
+        if(state->getHeuristic() == 0){
+            output << "Goal state reached!\n";
             break;
         }
 
-        int empI = state.getEmpI();
-        int empJ = state.getEmpJ();
+        int empI = state->getEmpI();
+        int empJ = state->getEmpJ();
 
         for(auto d: dirs){
             int nextI = empI + d[0];
             int nextJ = empJ + d[1];
 
             if(nextI>=0 && nextI<SIZE && nextJ>=0 && nextJ<SIZE){
-                GameState newState(state, nextI, nextJ);
+                GameState* newState = new GameState(state, nextI, nextJ);
+                
+                output<<"Generated Successor:\n";
+                newState->printState(output);
 
-                cout << "Generated successor:\n";
-                newState.printState();
-
-                if(visited.find(newState.getBoard()) == visited.end()){
-                    cout << "→ Not visited, inserting into priority queue\n\n";
+                if(visited.find(newState->getBoard()) == visited.end()){
                     pq.push(newState);
-                    visited.insert(newState.getBoard());
+                    visited.insert(newState->getBoard());
                 } else {
-                    cout << "→ Already visited, skipping\n\n";
+                    delete newState;   // avoid memory leak
                 }
+
             }
         }
     }
 
-    cout << "=============================\n";
-    cout << "Final Result:\n";
-    state.printState();
+    output << "=============================\n";
+    output << "Final Result:\n";
+    vector<GameState*> path;
+    GameState* ptr = state;
+    while(ptr != nullptr){
+        path.push_back(ptr);
+        ptr = ptr->getParent();
+    }
 
-    // Restore original buffer before exiting.
-    cout.rdbuf(oldCoutBuf);
+    reverse(path.begin(), path.end());
+
+    for(int i = 0; i < path.size(); i++){
+        path[i]->printState(output);
+        if(i < path.size() - 1){
+            output<<"      |\n";
+            output<<"      |\n";
+            output<<"      v\n";
+        }
+    }
+
+    output.close();
     return 0;
 }
