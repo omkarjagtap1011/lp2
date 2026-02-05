@@ -1,9 +1,26 @@
+/*
+How to run the code:-
+
+1. Compile:
+g++ Puzzle8.cpp -o Puzzle8
+
+2. Run with default solvableStateCount (3):
+./Puzzle8
+
+3. Run with custom solvableStateCount (e.g., 5):
+./Puzzle8 5
+
+4. To input custom initial and goal states, set solvableStateCount to 0:
+./Puzzle8 0
+*/
+
 #include <iostream>
 #include <vector>
 #include <queue>
 #include <set>
 #include <fstream>
 #include <algorithm>
+#include <string>
 using namespace std;
 
 int SIZE = 3;
@@ -57,16 +74,37 @@ class GameState{
             parent = prevState;
         }
 
+        // Hamming Distance Heuristic
+        // int _calculateHeuristic(){
+        //     int res = 0;
+        //     for(int i=0; i<SIZE; i++){
+        //         for(int j=0; j<SIZE; j++){
+        //             if(board[i][j] != 0 && goal[i][j] != board[i][j]){
+        //                 res++;
+        //             }
+        //         }
+        //     }
+
+        //     return res;
+        // }
+
+        // Manhattan Distance Heuristic
         int _calculateHeuristic(){
             int res = 0;
             for(int i=0; i<SIZE; i++){
                 for(int j=0; j<SIZE; j++){
-                    if(board[i][j] != 0 && goal[i][j] != board[i][j]){
-                        res++;
+                    if(board[i][j] != 0){
+                    // Find where this tile should be in goal state
+                    for(int gi=0; gi<SIZE; gi++){
+                        for(int gj=0; gj<SIZE; gj++){
+                            if(goal[gi][gj] == board[i][j]){
+                                res += abs(i - gi) + abs(j - gj);
+                            }
+                        }
+                    }
                     }
                 }
             }
-
             return res;
         }
 
@@ -166,16 +204,45 @@ int main(int argc, char* argv[]){
     priority_queue<GameState*, vector<GameState*>, decltype(cmp)> pq(cmp);
     set<vector<vector<int>>> visited;
 
-    GameState* state = new GameState(createSolvableState(solvableStateCount));
+    GameState* state = nullptr;
+    if(solvableStateCount == 0){
+        cout<<"Enter Initial State:\n";
+        vector<vector<int>> temp(SIZE, vector<int>(SIZE));
+        int ei, ej;
+        for(int i=0; i<SIZE; i++){
+            for(int j=0; j<SIZE; j++){
+                int val;
+                cin>>val;
+                temp[i][j] = val;
+                if(val == 0){
+                    ei = i;
+                    ej = j;
+                }
+            }
+        }
+        state = new GameState(temp, ei, ej);
+
+        cout<<"\nEnter Goal State:\n";
+        for(int i=0; i<SIZE; i++){
+            for(int j=0; j<SIZE; j++){
+                int val;
+                cin>>val;
+                goal[i][j] = val;
+            }
+        }
+    }else{
+        state = new GameState(createSolvableState(solvableStateCount));
+    }
     
     pq.push(state);
-    visited.insert(state->getBoard());
 
     int step = 0;
 
     while(!pq.empty()){
         state = pq.top();
         pq.pop();
+
+        visited.insert(state->getBoard());
 
         output << "=============================\n";
         output << "Step " << step++ << ": Expanding state\n";
@@ -201,7 +268,6 @@ int main(int argc, char* argv[]){
 
                 if(visited.find(newState->getBoard()) == visited.end()){
                     pq.push(newState);
-                    visited.insert(newState->getBoard());
                 } else {
                     delete newState;   // avoid memory leak
                 }
@@ -229,6 +295,9 @@ int main(int argc, char* argv[]){
             output<<"      v\n";
         }
     }
+
+    output<<"Total iterations: "<<step<<"\n";
+    output<<"Total steps to solve: "<<path.size() - 1<<"\n";
 
     output.close();
     return 0;
