@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Travel | Explore</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .nav {
+            display: flex;
+            background-color: rgb(65, 65, 185);
+            padding: 10px 20px;
+            align-items: center;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 40px;
+        }
+
+        .nav h2 {
+            color: white;
+            margin-right: auto;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .hero h1 {
+            font-size: 35px;
+            color: rgb(80, 66, 238);
+        }
+
+        .hero p {
+            font-size: 18px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            background-color: rgb(65, 65, 185);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            background-color: #0a6ebd;
+            cursor: pointer;
+        }
+
+        .chatwindow {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 320px;
+            color: white;
+            border-radius: 10px;
+            display: none;
+            overflow: hidden;
+        }
+
+        .header {
+            color: white;
+            background: #0a6ebd;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header span {
+            cursor: pointer;
+        }
+
+        .chatbody {
+            padding: 15px;
+            height: 250px;
+            background: white;
+            font-size: 15px;
+        }
+
+        .chatbody p {
+            margin: 10px 0;
+            color: rgb(95, 93, 93);
+        }
+
+        .chatfooter {
+            display: flex;
+            border-top: 1px solid;
+        }
+
+        .chatfooter input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+        }
+
+        .chatfooter button {
+            background: #0a6ebd;
+            color: white;
+            border: none;
+            padding: 0 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <h2>TravelGo</h2>
+        <a href="#">Home</a>
+        <a href="#">Explore</a>
+        <a href="#">Pricing</a>
+        <a href="#">About</a>
+    </nav>
+
+    <div class="hero">
+        <h1>Explore the World with TravelGo</h1>
+        <p>
+            Your journey begins here. Discover new places and create unforgettable
+            memories.
+        </p>
+        <button class="btn">Get Started</button>
+    </div>
+    <button class="chat-btn" onclick="toggleChat()">chat</button>
+
+    <div class="chatwindow" id="chatwindow">
+        <div class="header">
+            TravelGo Support
+            <span onclick="toggleChat()">X</span>
+        </div>
+        <div class="chatbody" id="chatbody">
+            <p><b>Bot:</b>Hello! How can I assist you today?</p>
+        </div>
+        <div class="chatfooter" id="chatfooter">
+            <input type="text" placeholder="Ask your query..." id="chat-input" />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const responses = {
+            hello: "Hello! Welcome to TravelGo.",
+            hi: "Hi! How can I help you today?",
+            tour: "We provide domestic and international tours.",
+            booking: "You can book your trip online easily.",
+            price: "Tour packages start from ₹10,000.",
+            cost: "Tour packages start from ₹10,000.",
+            contact: "Contact us at +91 9876543210.",
+            goa: "Goa is one of our most popular destinations.",
+            beach: "We have amazing beach tour packages.",
+            thanks: "You're welcome!",
+            thank: "Happy to help!",
+        };
+
+        function toggleChat() {
+            const chat = document.getElementById("chatwindow");
+
+            if (chat.style.display === "none" || chat.style.display === "") {
+                chat.style.display = "block";
+            } else {
+                chat.style.display = "none";
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById("chat-input");
+            let message = input.value.trim().toLowerCase();
+            if (message === "") {
+                return;
+            }
+            let chatbody = document.getElementById("chatbody");
+
+            chatbody.innerHTML += `<p><b>You:</b>${message}</p>`;
+
+            let replay = "Sorry I didnt understand your query.";
+
+            for (let key in responses) {
+                if (message.includes(key)) {
+                    replay = responses[key];
+                    break;
+                }
+            }
+            chatbody.innerHTML += `<p><b>Bot:</b>${replay}</p>`;
+            input.value = "";
+
+            chatbody.scrollTop = chatbody.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
